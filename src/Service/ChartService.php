@@ -1,28 +1,24 @@
 <?php
 
-namespace App\Controller\Site;
+namespace App\Service;
 
-use App\Repository\InvestmentRepository;
-use App\Service\MathService;
-use Symfony\UX\Chartjs\Builder\ChartBuilderInterface;
-use Symfony\UX\Chartjs\Model\Chart;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Attribute\Route;
 use DateTimeImmutable;
+use Symfony\UX\Chartjs\Model\Chart;
+use App\Repository\InvestmentRepository;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\UX\Chartjs\Builder\ChartBuilderInterface;
 
-
-final class GraphController extends AbstractController
-{
+class ChartService {
+    
     public function __construct(
         private InvestmentRepository $investmentRepository,
-        private MathService $mathService
-    ) {}
+        private EntityManagerInterface $entityManagerInterface,
+        private ChartBuilderInterface $chartBuilder
+    )
+    {}
 
-    #[Route('/investments/graph/', name: 'app_jp_graph')]
-    public function index(ChartBuilderInterface $chartBuilder): Response
+    public function generateChartInterests($investments): Chart
     {
-        $investments = $this->investmentRepository->findAll();
         $plotData = [];
         $allDates = [];
         
@@ -40,7 +36,7 @@ final class GraphController extends AbstractController
         }
 
         // Prépare les données pour le graphique à barres empilées
-        foreach ($investments as $investment) {
+        foreach($investments as $investment) {
             $investmentStartDate = $investment->getStartAt();
             $duration = $investment->getDuration();
             $interestByMonth = $investment->getInterestByMonth() / 100;
@@ -82,7 +78,7 @@ final class GraphController extends AbstractController
             $i++;
         }
 
-        $chart = $chartBuilder->createChart(Chart::TYPE_BAR);
+        $chart = $this->chartBuilder->createChart(Chart::TYPE_BAR);
         $chart->setData([
             'labels' => $labels,
             'datasets' => $datasets,
@@ -124,9 +120,41 @@ final class GraphController extends AbstractController
                 ],
             ],
         ]);
-        
-        return $this->render('site/chart/chart.html.twig', [
-            'chart' => $chart,
-        ]);
+
+        return $chart;
     }
+
 }
+
+
+
+// // Initialise les variables de calcul
+// $total_deja_recu = 0;
+// $max_mois_restant = 0;
+// $total_par_mois = [];
+
+// // Calcule le montant total déjà reçu et le nombre max de Durées
+// foreach ($investissements as $investissement) {
+//     $total_deja_recu += $investissement['Déjà reçu'];
+//     $mois_restant = intval($investissement['Durée']);
+//     if ($mois_restant > $max_mois_restant) {
+//         $max_mois_restant = $mois_restant;
+//     }
+// }
+
+// // Calcule les totaux pour chaque mois à venir, en ajoutant le capital pour le dernier mois
+// for ($i = 1; $i <= $max_mois_restant; $i++) {
+//     $total_par_mois[$i] = 0;
+//     foreach ($investissements as $investissement) {
+//         $mois_restant = intval($investissement['Durée']);
+//         if ($i <= $mois_restant) {
+//             // C'est le dernier mois de l'investissement
+//             if ($i == $mois_restant) {
+//                 $total_par_mois[$i] += $investissement['Montant / mois'] + $investissement['Capital'];
+//             } else {
+//                 // Ce n'est pas le dernier mois
+//                 $total_par_mois[$i] += $investissement['Montant / mois'];
+//             }
+//         }
+//     }
+// }

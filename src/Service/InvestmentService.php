@@ -38,7 +38,7 @@ class InvestmentService {
             ],
             [
                 'Nom' => 'Hôtel Bordeaux Lormont',
-                'Date' => '',
+                'Date' => '23/10/2023',
                 'Capital' => 1000,
                 'Déjà reçu' => 124,
                 'Taux' => 9,
@@ -199,7 +199,9 @@ class InvestmentService {
 
             $entityInDatabase->setName($investment['Nom']);
             $entityInDatabase->setStartAt($startDate);
+            $entityInDatabase->setBuyAt($startDate);
             $entityInDatabase->setEndAt($dateFin);
+            $entityInDatabase->setIsFinished(false);
             $entityInDatabase->setStartingCapital($investment['Capital']);
             $entityInDatabase->setDuration($investment['Durée']);
             $entityInDatabase->setRate($investment['Taux']);
