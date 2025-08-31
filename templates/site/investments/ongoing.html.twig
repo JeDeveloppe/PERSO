@@ -1,0 +1,65 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes Investissements{% endblock %}
+
+{% block body %}
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">Mes Investissements</h1>
+
+        <div class="row g-4">
+            {# On boucle sur la liste des investissements #}
+            {% for investment in investments %}
+            <div class="col-md-6 col-lg-4 d-flex">
+                <div class="card card-investment w-100">
+                    <div class="card-header">
+                        {{ investment.name }}
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Capital Initial
+                                <span class="badge bg-primary rounded-pill badge-capital">{{ investment.startingCapital / 100 }} €</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Déjà Reçu
+                                <span class="badge bg-success rounded-pill">{{ investment.alreadyReceived / 100 }} €</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Intérêt/Mois
+                                <span class="badge bg-info rounded-pill">{{ investment.interestByMonth / 100 }} €</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Durée du projet
+                                <span class="badge bg-secondary rounded-pill">{{ investment.duration }} mois</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Mois Restants
+                                {% set remainingMonths = investment.getRemainingMonths() %}
+                                {% if remainingMonths == 'Terminé' %}
+                                    <span class="badge bg-danger rounded-pill">{{ remainingMonths }}</span>
+                                {% else %}
+                                    <span class="badge bg-secondary rounded-pill">{{ remainingMonths }} mois</span>
+                                {% endif %}
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Date de Début
+                                <span>{{ investment.startAt ? investment.startAt|date('d/m/Y') : 'N/A' }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Date de Fin
+                                <span>{{ investment.endAt ? investment.endAt|date('d/m/Y') : 'N/A' }}</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="mt-5 text-center">
+            <div class="card p-3 shadow-sm d-inline-block">
+                <h3 class="mb-0">Capital Total Investi</h3>
+                <p class="h4 text-primary">{{ capitalInvested / 100 }} €</p>
+            </div>
+        </div>
+    </div>
+{% endblock %}
