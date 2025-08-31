@@ -34,14 +34,16 @@ class InvestmentCrudController extends AbstractCrudController
         return [
             FormField::addFieldset('Actions / Pramètres'),
             IdField::new('id')->hideOnForm()->hideOnIndex(),
-            TextField::new('name', 'Nom du projet')->setColumns(3),
+            TextField::new('name', 'Nom du projet')->setColumns(6),
+            DateTimeField::new('buyAt', 'Date d\'achat')->setColumns(3)->hideOnIndex()->setFormat('dd/MM/yyyy'),
+            MoneyField::new('startingCapital','Capital investie')->setCurrency('EUR')->setStoredAsCents(true)->setColumns(3),
             NumberField::new('rate', 'Taux d\'interet')->setColumns(3),
             MoneyField::new('interestByMonth', 'Interet par mois')->setCurrency('EUR')->setStoredAsCents(true)->setColumns(3)->setRequired(false),
-            IntegerField::new('paymentDate', 'Date des réglements mensuels')->setColumns(1)->hideOnIndex(),
-            MoneyField::new('startingCapital','Capital investie')->setCurrency('EUR')->setStoredAsCents(true)->setColumns(3),
-            IntegerField::new('duration', 'Durée du projet (en mois)')->setColumns(3),
-            DateTimeField::new('startAt', 'Date de début')->setColumns(3)->hideOnIndex()->setFormat('dd/MM/yyyy'),
-            DateTimeField::new('endAt', 'Date de fin')->setColumns(3)->setFormat('dd/MM/yyyy'),
+            IntegerField::new('paymentDate', 'Date des réglements mensuels')->setColumns(3)->hideOnIndex(),
+            IntegerField::new('duration', 'Durée du projet (en mois)')->setColumns(4),
+            DateTimeField::new('startAt', 'Date de début')->setColumns(4)->hideOnIndex()->setFormat('dd/MM/yyyy'),
+            DateTimeField::new('endAt', 'Date de fin')->setColumns(4)->setFormat('dd/MM/yyyy'),
+
         ];
     }
     
@@ -91,6 +93,7 @@ class InvestmentCrudController extends AbstractCrudController
                     $paymentDay
                 );
             $entityInstance->setEndAt($dateFin);
+            $entityInstance->setIsFinished(false);
 
             $entityManager->persist($entityInstance);
             $entityManager->flush();

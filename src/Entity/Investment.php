@@ -58,6 +58,9 @@ class Investment
     #[ORM\Column]
     private ?bool $isFinished = null;
 
+    #[ORM\Column]
+    private ?\DateTimeImmutable $buyAt = null;
+
     public function __construct()
     {
         $this->earlyRepayments = new ArrayCollection();
@@ -229,6 +232,18 @@ class Investment
     public function setIsFinished(bool $isFinished): static
     {
         $this->isFinished = $isFinished;
+
+        return $this;
+    }
+
+    public function getBuyAt(): ?\DateTimeImmutable
+    {
+        return $this->buyAt;
+    }
+
+    public function setBuyAt(\DateTimeImmutable $buyAt): static
+    {
+        $this->buyAt = $buyAt;
 
         return $this;
     }
