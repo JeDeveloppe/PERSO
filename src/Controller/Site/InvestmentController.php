@@ -8,7 +8,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
-class InvestmentController extends AbstractController
+final class InvestmentController extends AbstractController
 {
     #[Route('/investments', name: 'app_investments_ongoing')]
     public function index(MathService $mathService, InvestmentRepository $investmentRepository): Response
