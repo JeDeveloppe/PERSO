@@ -3,6 +3,8 @@
 namespace App\Service;
 
 use DateTimeImmutable;
+use App\Entity\EarlyRepayment;
+use App\Repository\EarlyRepaymentRepository;
 use Symfony\UX\Chartjs\Model\Chart;
 use App\Repository\InvestmentRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -13,7 +15,8 @@ class ChartService {
     public function __construct(
         private InvestmentRepository $investmentRepository,
         private EntityManagerInterface $entityManagerInterface,
-        private ChartBuilderInterface $chartBuilder
+        private ChartBuilderInterface $chartBuilder,
+        private EarlyRepaymentRepository $earlyRepaymentRepository
     )
     {}
 
@@ -24,8 +27,8 @@ class ChartService {
         
         // Définir la plage de dates du graphique
         $now = new DateTimeImmutable();
-        $startDate = $now->modify('-2 months');
-        $endDate = $now->modify('+24 months'); // Pour afficher 24 mois après la date actuelle par défaut
+        $startDate = $now->modify('-1 months');
+        $endDate = $startDate->modify('+24 months');
 
         $interval = new \DateInterval('P1M');
         $period = new \DatePeriod($startDate, $interval, $endDate);
@@ -39,7 +42,7 @@ class ChartService {
         foreach($investments as $investment) {
             $investmentStartDate = $investment->getStartAt();
             $duration = $investment->getDuration();
-            $interestByMonth = $investment->getInterestByMonth() / 100;
+            $interestByMonth = $investment->getInterestByMonth(); // Valeur en centimes
             $investmentName = $investment->getName();
             
             if (!$investmentStartDate) {
@@ -48,12 +51,28 @@ class ChartService {
 
             $currentInvestmentData = [];
             
+            // Récupère le dernier remboursement anticipé
+            $lastEarlyRepayment = $this->earlyRepaymentRepository->findLastEarlyRepayment($investment);
+            
             // Boucle sur les mois de l'investissement
             for ($i = 0; $i < $duration; $i++) {
                 $date = $investmentStartDate->modify('+' . $i . ' months');
                 $key = $date->format('Y-m');
                 
-                $currentInvestmentData[$key] = $interestByMonth;
+                // Si un remboursement anticipé existe
+                if ($lastEarlyRepayment) {
+                    // Si la date du mois en cours est après la date du remboursement
+                    if ($date > $lastEarlyRepayment->getCreatedAt()->modify('last day of this month')) {
+                        // Utiliser le nouvel intérêt restant par mois
+                        $currentInvestmentData[$key] = $lastEarlyRepayment->getRemainingInterestByMonth();
+                    } else {
+                        // Utiliser l'intérêt initial
+                        $currentInvestmentData[$key] = $interestByMonth;
+                    }
+                } else {
+                    // Aucun remboursement anticipé, utiliser l'intérêt initial
+                    $currentInvestmentData[$key] = $interestByMonth;
+                }
             }
 
             $plotData[$investmentName] = $currentInvestmentData;
@@ -68,7 +87,8 @@ class ChartService {
         foreach ($plotData as $investmentName => $monthlyData) {
             $data = [];
             foreach ($labels as $month) {
-                $data[] = $monthlyData[$month] ?? 0;
+                // Conversion finale en euros pour le graphique
+                $data[] = isset($monthlyData[$month]) ? $monthlyData[$month] / 100 : 0;
             }
             $datasets[] = [
                 'label' => $investmentName,
@@ -76,6 +96,34 @@ class ChartService {
                 'backgroundColor' => $colors[$i % count($colors)],
             ];
             $i++;
+        }
+
+        // --- Création des annotations horizontales ---
+        $annotations = [];
+        $lineId = 0;
+        $currentTotals = array_fill_keys($labels, 0);
+
+        foreach ($datasets as $dataset) {
+            foreach ($dataset['data'] as $index => $value) {
+                $month = $labels[$index];
+                $currentTotals[$month] += $value; // Cumule la valeur pour cette barre
+                
+                // Crée une ligne horizontale si la valeur n'est pas zéro
+                if ($value > 0) {
+                    $annotations['line' . $lineId] = [
+                        'type' => 'line',
+                        'mode' => 'horizontal',
+                        'yMin' => $currentTotals[$month],
+                        'yMax' => $currentTotals[$month],
+                        'xMin' => $month, // Ancre la ligne au mois
+                        'xMax' => $month,
+                        'borderColor' => 'rgba(0, 0, 0, 0.2)',
+                        'borderWidth' => 1,
+                        'borderDash' => [2, 2],
+                    ];
+                    $lineId++;
+                }
+            }
         }
 
         $chart = $this->chartBuilder->createChart(Chart::TYPE_BAR);
@@ -97,6 +145,9 @@ class ChartService {
                     'mode' => 'index',
                     'intersect' => false,
                 ],
+                'annotation' => [
+                    'annotations' => $annotations,
+                ],
             ],
             'responsive' => true,
             'scales' => [
@@ -107,7 +158,6 @@ class ChartService {
                             'size' => 10,
                         ],
                     ],
-                    // Largeur de la barre
                     'categoryPercentage' => 0.8,
                     'barPercentage' => 0.9,
                 ],
@@ -123,38 +173,4 @@ class ChartService {
 
         return $chart;
     }
-
 }
-
-
-
-// // Initialise les variables de calcul
-// $total_deja_recu = 0;
-// $max_mois_restant = 0;
-// $total_par_mois = [];
-
-// // Calcule le montant total déjà reçu et le nombre max de Durées
-// foreach ($investissements as $investissement) {
-//     $total_deja_recu += $investissement['Déjà reçu'];
-//     $mois_restant = intval($investissement['Durée']);
-//     if ($mois_restant > $max_mois_restant) {
-//         $max_mois_restant = $mois_restant;
-//     }
-// }
-
-// // Calcule les totaux pour chaque mois à venir, en ajoutant le capital pour le dernier mois
-// for ($i = 1; $i <= $max_mois_restant; $i++) {
-//     $total_par_mois[$i] = 0;
-//     foreach ($investissements as $investissement) {
-//         $mois_restant = intval($investissement['Durée']);
-//         if ($i <= $mois_restant) {
-//             // C'est le dernier mois de l'investissement
-//             if ($i == $mois_restant) {
-//                 $total_par_mois[$i] += $investissement['Montant / mois'] + $investissement['Capital'];
-//             } else {
-//                 // Ce n'est pas le dernier mois
-//                 $total_par_mois[$i] += $investissement['Montant / mois'];
-//             }
-//         }
-//     }
-// }

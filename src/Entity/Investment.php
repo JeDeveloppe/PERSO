@@ -2,12 +2,13 @@
 
 namespace App\Entity;
 
-use App\Repository\InvestmentRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
-use Symfony\Component\Validator\Constraints as Assert;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use App\Repository\InvestmentRepository;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\ArrayCollection;
+use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: InvestmentRepository::class)]
 class Investment
@@ -15,9 +16,11 @@ class Investment
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups('investment:read')]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups('investment:read')]
     private ?string $name = null;
 
     #[ORM\Column]
@@ -36,6 +39,7 @@ class Investment
      * @var Collection<int, EarlyRepayment>
      */
     #[ORM\OneToMany(targetEntity: EarlyRepayment::class, mappedBy: 'investment')]
+    #[Groups('investment:read')]
     private Collection $earlyRepayments;
 
     #[ORM\Column]
@@ -246,5 +250,10 @@ class Investment
         $this->buyAt = $buyAt;
 
         return $this;
+    }
+
+    public function __toString()
+    {
+        return $this->name;
     }
 }

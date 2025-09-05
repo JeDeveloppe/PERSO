@@ -3,11 +3,9 @@
 {% block title %}Mes Investissements en cours{% endblock %}
 
 {% block body %}
-
     <h1 class="text-center my-5">Mes Investissements en cours</h1>
-
     <div class="row g-4">
-        {# On boucle sur la liste des investissements #}
+        {# La boucle utilise le tableau d'objets PHP #}
         {% for investment in investments %}
             <div class="col-md-6 col-lg-4 d-flex">
                 <div class="card card-investment w-100">
@@ -46,10 +44,82 @@
                                 <span>{{ investment.endAt ? investment.endAt|date('d/m/Y') : 'N/A' }}</span>
                             </li>
                         </ul>
+                        {% if investment.earlyRepayments is not empty %}
+                            <div class="text-center mt-3">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#earlyRepaymentModal" data-investment-id="{{ investment.id }}">
+                                    Voir les remboursements anticipés ({{ investment.earlyRepayments|length }})
+                                </button>
+                            </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
         {% endfor %}
     </div>
 
+    {# La modale est toujours la même #}
+    <div class="modal fade" id="earlyRepaymentModal" tabindex="-1" aria-labelledby="earlyRepaymentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="earlyRepaymentModalLabel">Remboursements Anticipés</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <ul class="list-group" id="repayments-list">
+                        {# Le contenu sera inséré ici par le JavaScript #}
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const investments = JSON.parse('{{ investmentsJson|raw }}');
+            
+            const earlyRepaymentModal = document.getElementById('earlyRepaymentModal');
+            
+            earlyRepaymentModal.addEventListener('show.bs.modal', function (event) {
+                const button = event.relatedTarget; 
+                const investmentId = button.getAttribute('data-investment-id');
+                const investment = investments.find(inv => inv.id == investmentId);
+
+                const repaymentsList = document.getElementById('repayments-list');
+                repaymentsList.innerHTML = '';
+
+                if (investment && investment.earlyRepayments.length > 0) {
+                    investment.earlyRepayments.forEach(repayment => {
+                        const listItem = document.createElement('li');
+                        listItem.className = 'list-group-item d-flex flex-column'; // Ajout de flex-column pour la mise en page
+
+                        const formattedValue = (repayment.value / 100).toFixed(2);
+                        const formattedCapital = (repayment.remainingCapital / 100).toFixed(2);
+                        const formattedInterest = (repayment.remainingInterestByMonth / 100).toFixed(2);
+                        const formattedDate = new Date(repayment.createdAt).toLocaleDateString('fr-FR');
+
+                        listItem.innerHTML = `
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="fw-bold fs-5">${formattedValue} €</span>
+                                <span class="text-muted small">${formattedDate}</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center text-muted small">
+                                <span>Capital restant : ${formattedCapital} €</span>
+                                <span>Intérêt/mois : ${formattedInterest} €</span>
+                            </div>
+                        `;
+                        repaymentsList.appendChild(listItem);
+                    });
+                } else {
+                    repaymentsList.innerHTML = '<li class="list-group-item text-center text-muted">Aucun remboursement anticipé.</li>';
+                }
+            });
+        });
+    </script>
 {% endblock %}
