@@ -1,10 +1,38 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Mes Investissements en cours{% endblock %}
+{% block title %}Tableau de bord des investissements{% endblock %}
 
 {% block body %}
     <h1 class="text-center my-5">Mes Investissements en cours</h1>
 
+    <div class="container my-4">
+        <div class="row g-4 text-center">
+            <div class="col-md-3">
+                <div class="card card-like shadow p-3 h-100">
+                    <h5 class="card-title text-muted fw-bold">Capital Investi</h5>
+                    <p class="card-text fs-3 text-primary">{{ (capitalInvested / 100) | number_format(2, ',', ' ') }} €</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card card-like shadow p-3 h-100">
+                    <h5 class="card-title text-muted fw-bold">Intérêts Reçus</h5>
+                    <p class="card-text fs-3 text-success">{{ (interestReceived / 100) | number_format(2, ',', ' ') }} €</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card card-like shadow p-3 h-100">
+                    <h5 class="card-title text-muted fw-bold">Rendement Annualisé</h5>
+                    <p class="card-text fs-3 text-info" id="rendement-percentage">{{ annuelYielFromAllInvestmentsWithInterest | number_format(2, ',', ' ') }} %</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card card-like shadow p-3 h-100">
+                    <h5 class="card-title text-muted fw-bold">Taux Moyen</h5>
+                    <p class="card-text fs-3 text-warning">{{ averageRateFromAllInvestmentsWithInterest | number_format(2, ',', ' ') }} %</p>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="container my-4 card-like">
         <div class="mb-3">
             <input type="search" id="investment-search" class="form-control rounded-pill" placeholder="Rechercher un investissement...">
@@ -16,6 +44,7 @@
                     <tr>
                         <th scope="col" class="text-start">Nom</th>
                         <th scope="col" class="text-center">Capital initial</th>
+                        <th scope="col" class="text-center">Taux annuel</th>
                         <th scope="col" class="text-center">Capital remboursé</th>
                         <th scope="col" class="text-center">Total intérêts reçus</th>
                         <th scope="col" class="text-center">Intérêt/mois</th>
@@ -31,6 +60,9 @@
                             <td data-name="{{ investment.name }}">{{ investment.name }}</td>
                             <td data-startingCapital="{{ investment.startingCapital }}" class="text-center">
                                 <span class="badge bg-primary rounded-pill">{{ investment.startingCapital / 100 }} €</span>
+                            </td>
+                            <td data-interestRate="{{ investment.rate }}" class="text-center">
+                                <span class="badge bg-secondary rounded-pill">{{ investment.rate | number_format(2, ',', ' ') }} %</span>
                             </td>
                             <td data-capitalAlreadyReceived="{{ investment.capitalAlreadyReceived }}" class="text-center">
                                 <span class="badge bg-success rounded-pill">{{ investment.capitalAlreadyReceived / 100 }} €</span>

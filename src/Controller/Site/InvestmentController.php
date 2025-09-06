@@ -27,15 +27,11 @@ final class InvestmentController extends AbstractController
     {
         $allInvestments = $investmentRepository->findAll();
 
-        // //?on met à jour le capital recu par l'investisseur
-        // foreach ($allInvestments as $investment) {
-        //     $this->earlyRepaymentService->updateCapitalAlreadyReceived($investment);
-        //     //?on met à jour les interets recu depuis le debut de l'investissement
-        //     $this->earlyRepaymentService->updateTotalInterestReceived($investment);
-        // }
-
-        //?on calcule le capital total investis pour tous les projets (même ceux terminés)
+        //quelques totaux
         $capitalInvested = $this->investmentService->calculateCapitalInvested();
+        $interestReceived = $this->investmentService->calculateInterestReceived();
+        $annuelYielFromAllInvestmentsWithInterest = $this->investmentService->calculateAnnualizedRendementFromAllInvestmentsWithInterest($allInvestments);
+        $averageRateFromAllInvestmentsWithInterest = $this->investmentService->calculateAverageRateFromAllInvestmentsWithInterest($allInvestments);
 
         $ongoingInvestments = array_filter($allInvestments, function($investment) {
             return $investment->getRemainingMonths() !== 'Terminé';
@@ -52,6 +48,9 @@ final class InvestmentController extends AbstractController
             'investments' => $ongoingInvestments, // Pour la boucle Twig
             'investmentsJson' => $ongoingInvestmentsJson, // Pour le JavaScript
             'capitalInvested' => $capitalInvested,
+            'interestReceived' => $interestReceived,
+            'annuelYielFromAllInvestmentsWithInterest' => $annuelYielFromAllInvestmentsWithInterest,
+            'averageRateFromAllInvestmentsWithInterest' => $averageRateFromAllInvestmentsWithInterest
         ]);
     }
 
