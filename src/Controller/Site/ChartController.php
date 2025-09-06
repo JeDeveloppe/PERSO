@@ -2,7 +2,6 @@
 
 namespace App\Controller\Site;
 
-use App\Service\MathService;
 use App\Service\ChartService;
 use App\Repository\InvestmentRepository;
 use Symfony\Component\HttpFoundation\Response;
@@ -14,14 +13,13 @@ final class ChartController extends AbstractController
 {
     public function __construct(
         private InvestmentRepository $investmentRepository,
-        private MathService $mathService,
         private ChartService $chartservice
     ) {}
 
     #[Route('/investments/graph/', name: 'app_jp_graph')]
     public function index(): Response
     {
-        $investments = $this->investmentRepository->findAll();
+        $investments = $this->investmentRepository->findBy(['isFinished' => false]);
 
         $chart = $this->chartservice->generateChartInterests($investments);
         

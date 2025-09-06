@@ -2,12 +2,13 @@
 
 namespace App\Entity;
 
-use App\Repository\InvestmentRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
-use Symfony\Component\Validator\Constraints as Assert;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use App\Repository\InvestmentRepository;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\ArrayCollection;
+use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: InvestmentRepository::class)]
 class Investment
@@ -15,9 +16,11 @@ class Investment
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups('investment:read')]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups('investment:read')]
     private ?string $name = null;
 
     #[ORM\Column]
@@ -30,12 +33,13 @@ class Investment
     private ?string $rate = null;
 
     #[ORM\Column(nullable: true)]
-    private ?int $alreadyReceived = null;
+    private ?int $capitalAlreadyReceived = null;
 
     /**
      * @var Collection<int, EarlyRepayment>
      */
     #[ORM\OneToMany(targetEntity: EarlyRepayment::class, mappedBy: 'investment')]
+    #[Groups('investment:read')]
     private Collection $earlyRepayments;
 
     #[ORM\Column]
@@ -60,6 +64,9 @@ class Investment
 
     #[ORM\Column]
     private ?\DateTimeImmutable $buyAt = null;
+
+    #[ORM\Column]
+    private ?int $totalInterestReceived = null;
 
     public function __construct()
     {
@@ -119,14 +126,14 @@ class Investment
         return $this;
     }
 
-    public function getAlreadyReceived(): ?int
+    public function getCapitalAlreadyReceived(): ?int
     {
-        return $this->alreadyReceived;
+        return $this->capitalAlreadyReceived;
     }
 
-    public function setAlreadyReceived(?int $alreadyReceived): static
+    public function setCapitalAlreadyReceived(?int $capitalAlreadyReceived): static
     {
-        $this->alreadyReceived = $alreadyReceived;
+        $this->capitalAlreadyReceived = $capitalAlreadyReceived;
 
         return $this;
     }
@@ -244,6 +251,23 @@ class Investment
     public function setBuyAt(\DateTimeImmutable $buyAt): static
     {
         $this->buyAt = $buyAt;
+
+        return $this;
+    }
+
+    public function __toString()
+    {
+        return $this->name;
+    }
+
+    public function getTotalInterestReceived(): ?int
+    {
+        return $this->totalInterestReceived;
+    }
+
+    public function setTotalInterestReceived(int $totalInterestReceived): static
+    {
+        $this->totalInterestReceived = $totalInterestReceived;
 
         return $this;
     }

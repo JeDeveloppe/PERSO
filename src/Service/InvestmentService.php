@@ -202,6 +202,7 @@ class InvestmentService {
             $entityInDatabase->setBuyAt($startDate);
             $entityInDatabase->setEndAt($dateFin);
             $entityInDatabase->setIsFinished(false);
+            $entityInDatabase->setTotalInterestReceived(0);
             $entityInDatabase->setStartingCapital($investment['Capital']);
             $entityInDatabase->setDuration($investment['Durée']);
             $entityInDatabase->setRate($investment['Taux']);
@@ -213,37 +214,109 @@ class InvestmentService {
 
         $this->entityManagerInterface->flush();
     }
+
+     public function calculateCapitalInvested(): int
+    {
+        $capitalInvested = 0;
+        $investments = $this->investmentRepository->findAll();
+
+        foreach ($investments as $investment) {
+            $capitalInvested += $investment->getStartingCapital();
+        }
+
+        return $capitalInvested;
+    }
+
+    /**
+     * Calcul des intérêts reçus
+     */
+    public function calculateInterestReceived(): int
+    {
+        $interestReceived = 0;
+        $investments = $this->investmentRepository->findAll();
+
+        foreach ($investments as $investment) {
+            $interestReceived += $investment->getTotalInterestReceived();
+        }
+
+        return $interestReceived;
+    }
+
+
+    /**
+     * Calcule le nombre de mois restants entre la date de fin de l'investissement et aujourd'hui.
+     */
+    public function calculateRemainingMonths(DateTimeImmutable $endAt): int|string
+    {
+        $now = new DateTimeImmutable();
+        $interval = $endAt->diff($now);
+
+        if ($interval->invert) {
+            return 'Terminé';
+        }
+
+        return ($interval->y * 12) + $interval->m;
+    }
+
+    /**
+     * Calcule le rendement annualisé basé sur le capital investi et les intérêts reçus.
+     *
+     * @param array $allInvestments L'ensemble des investissements à filtrer.
+     * @return float Le rendement annualisé en pourcentage.
+     */
+    public function calculateAnnualizedRendementFromAllInvestmentsWithInterest(array $allInvestments): float
+    {
+        $filteredInvestments = array_filter($allInvestments, function(Investment $investment) {
+            return $investment->getTotalInterestReceived() > 0;
+        });
+
+        if (empty($filteredInvestments)) {
+            return 0.0;
+        }
+
+        $totalCapital = 0;
+        $totalInterest = 0;
+        $totalMonths = 0;
+        $now = new DateTimeImmutable();
+
+        foreach ($filteredInvestments as $investment) {
+            $totalCapital += $investment->getStartingCapital();
+            $totalInterest += $investment->getTotalInterestReceived();
+            
+            // On calcule la différence en mois entre la date de début et la date actuelle
+            $diff = $investment->getStartAt()->diff($now);
+            $months = ($diff->y * 12) + $diff->m;
+            $totalMonths += max(1, $months); // S'assurer qu'on ne divise pas par zéro
+        }
+
+        // Calcule la moyenne des mois écoulés
+        $averageMonths = $totalMonths / count($filteredInvestments);
+        
+        // Calcule le rendement total
+        $totalReturn = ($totalCapital > 0) ? $totalInterest / $totalCapital : 0;
+
+        // Calcule le rendement annualisé en le projetant sur 12 mois
+        return ($totalReturn / $averageMonths) * 100 * 12;
+    }
+
+    public function calculateAverageRateFromAllInvestmentsWithInterest(array $allInvestments): float
+    {
+        $filteredInvestments = array_filter($allInvestments, function(Investment $investment) {
+            return $investment->getTotalInterestReceived() > 0;
+        });
+
+        if (empty($filteredInvestments)) {
+            return 0.0;
+        }
+
+        $sumOfRates = 0;
+        $numberOfInvestments = count($filteredInvestments);
+
+        foreach ($filteredInvestments as $investment) {
+            $sumOfRates += $investment->getRate();
+        }
+
+        return ($sumOfRates / $numberOfInvestments);
+    }
+
 }
-
-
-
-// // Initialise les variables de calcul
-// $total_deja_recu = 0;
-// $max_mois_restant = 0;
-// $total_par_mois = [];
-
-// // Calcule le montant total déjà reçu et le nombre max de Durées
-// foreach ($investissements as $investissement) {
-//     $total_deja_recu += $investissement['Déjà reçu'];
-//     $mois_restant = intval($investissement['Durée']);
-//     if ($mois_restant > $max_mois_restant) {
-//         $max_mois_restant = $mois_restant;
-//     }
-// }
-
-// // Calcule les totaux pour chaque mois à venir, en ajoutant le capital pour le dernier mois
-// for ($i = 1; $i <= $max_mois_restant; $i++) {
-//     $total_par_mois[$i] = 0;
-//     foreach ($investissements as $investissement) {
-//         $mois_restant = intval($investissement['Durée']);
-//         if ($i <= $mois_restant) {
-//             // C'est le dernier mois de l'investissement
-//             if ($i == $mois_restant) {
-//                 $total_par_mois[$i] += $investissement['Montant / mois'] + $investissement['Capital'];
-//             } else {
-//                 // Ce n'est pas le dernier mois
-//                 $total_par_mois[$i] += $investissement['Montant / mois'];
-//             }
-//         }
-//     }
-// }
