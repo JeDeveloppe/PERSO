@@ -4,57 +4,65 @@
 
 {% block body %}
     <h1 class="text-center my-5">Mes Investissements en cours</h1>
-    <div class="row g-4">
-        {# La boucle utilise le tableau d'objets PHP #}
-        {% for investment in investments %}
-            <div class="col-md-6 col-lg-4 d-flex">
-                <div class="card card-investment w-100">
-                    <div class="card-header">
-                        {{ investment.name }}
-                    </div>
-                    <div class="card-body">
-                        <ul class="list-group list-group-flush">
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                Capital Initial
-                                <span class="badge bg-primary rounded-pill badge-capital">{{ investment.startingCapital / 100 }} €</span>
-                            </li>
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                Déjà Reçu
-                                <span class="badge bg-success rounded-pill">{{ investment.alreadyReceived / 100 }} €</span>
-                            </li>
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                Intérêt/Mois
+
+    <div class="container my-4 card-like">
+        <div class="mb-3">
+            <input type="search" id="investment-search" class="form-control rounded-pill" placeholder="Rechercher un investissement...">
+        </div>
+        
+        <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle">
+                <thead id="investments-table-head">
+                    <tr>
+                        <th scope="col" class="text-start">Nom</th>
+                        <th scope="col" class="text-center">Capital initial</th>
+                        <th scope="col" class="text-center">Capital remboursé</th>
+                        <th scope="col" class="text-center">Total intérêts reçus</th>
+                        <th scope="col" class="text-center">Intérêt/mois</th>
+                        <th scope="col" class="text-center">Mois restants</th>
+                        <th scope="col" class="text-center">Début</th>
+                        <th scope="col" class="text-center">Fin</th>
+                        <th scope="col" class="text-center">Remboursements</th>
+                    </tr>
+                </thead>
+                <tbody id="investments-table-body">
+                    {% for investment in investments %}
+                        <tr>
+                            <td data-name="{{ investment.name }}">{{ investment.name }}</td>
+                            <td data-startingCapital="{{ investment.startingCapital }}" class="text-center">
+                                <span class="badge bg-primary rounded-pill">{{ investment.startingCapital / 100 }} €</span>
+                            </td>
+                            <td data-capitalAlreadyReceived="{{ investment.capitalAlreadyReceived }}" class="text-center">
+                                <span class="badge bg-success rounded-pill">{{ investment.capitalAlreadyReceived / 100 }} €</span>
+                            </td>
+                            <td data-totalInterestReceived="{{ investment.totalInterestReceived }}" class="text-center">
+                                <span class="badge bg-warning rounded-pill">{{ investment.totalInterestReceived / 100 }} €</span>
+                            </td>
+                            <td data-interestByMonth="{{ investment.interestByMonth }}" class="text-center">
                                 <span class="badge bg-info rounded-pill">{{ investment.interestByMonth / 100 }} €</span>
-                            </li>
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                Mois Restants
+                            </td>
+                            <td data-remainingMonths="{% if investment.getRemainingMonths() == 'Terminé' %}-1{% else %}{{ investment.getRemainingMonths() }}{% endif %}" class="text-center">
                                 {% set remainingMonths = investment.getRemainingMonths() %}
                                 {% if remainingMonths == 'Terminé' %}
                                     <span class="badge bg-danger rounded-pill">{{ remainingMonths }}</span>
                                 {% else %}
                                     <span class="badge bg-secondary rounded-pill">{{ remainingMonths }} mois</span>
                                 {% endif %}
-                            </li>
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                Date de Début
-                                <span>{{ investment.startAt ? investment.startAt|date('d/m/Y') : 'N/A' }}</span>
-                            </li>
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                Date de Fin
-                                <span>{{ investment.endAt ? investment.endAt|date('d/m/Y') : 'N/A' }}</span>
-                            </li>
-                        </ul>
-                        {% if investment.earlyRepayments is not empty %}
-                            <div class="text-center mt-3">
-                                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#earlyRepaymentModal" data-investment-id="{{ investment.id }}">
-                                    Voir les remboursements anticipés ({{ investment.earlyRepayments|length }})
-                                </button>
-                            </div>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-        {% endfor %}
+                            </td>
+                            <td data-startAt="{{ investment.startAt|date('Y-m-d') }}" class="text-center">{{ investment.startAt ? investment.startAt|date('d/m/Y') : 'N/A' }}</td>
+                            <td data-endAt="{{ investment.endAt|date('Y-m-d') }}" class="text-center">{{ investment.endAt ? investment.endAt|date('d/m/Y') : 'N/A' }}</td>
+                            <td class="text-center">
+                                {% if investment.earlyRepayments is not empty %}
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#earlyRepaymentModal" data-investment-id="{{ investment.id }}">
+                                        Voir
+                                    </button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 
     {# La modale est toujours la même #}
@@ -80,6 +88,15 @@
 
 {% block javascripts %}
     {{ parent() }}
+    <style>
+        /* Nouvelles classes pour une meilleure UX */
+        .card-like {
+            background-color: #ffffff;
+            border-radius: 1rem;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+            padding: 1.5rem;
+        }
+    </style>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const investments = JSON.parse('{{ investmentsJson|raw }}');
@@ -97,7 +114,7 @@
                 if (investment && investment.earlyRepayments.length > 0) {
                     investment.earlyRepayments.forEach(repayment => {
                         const listItem = document.createElement('li');
-                        listItem.className = 'list-group-item d-flex flex-column'; // Ajout de flex-column pour la mise en page
+                        listItem.className = 'list-group-item d-flex flex-column'; 
 
                         const formattedValue = (repayment.value / 100).toFixed(2);
                         const formattedCapital = (repayment.remainingCapital / 100).toFixed(2);
@@ -119,6 +136,24 @@
                 } else {
                     repaymentsList.innerHTML = '<li class="list-group-item text-center text-muted">Aucun remboursement anticipé.</li>';
                 }
+            });
+
+            // Logique de recherche
+            const searchInput = document.getElementById('investment-search');
+            const investmentsTableBody = document.getElementById('investments-table-body');
+            const tableRows = investmentsTableBody.querySelectorAll('tr');
+
+            searchInput.addEventListener('input', (e) => {
+                const searchTerm = e.target.value.toLowerCase();
+
+                tableRows.forEach(row => {
+                    const rowText = row.textContent.toLowerCase();
+                    if (rowText.includes(searchTerm)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
             });
         });
     </script>

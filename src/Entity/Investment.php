@@ -33,7 +33,7 @@ class Investment
     private ?string $rate = null;
 
     #[ORM\Column(nullable: true)]
-    private ?int $alreadyReceived = null;
+    private ?int $capitalAlreadyReceived = null;
 
     /**
      * @var Collection<int, EarlyRepayment>
@@ -64,6 +64,9 @@ class Investment
 
     #[ORM\Column]
     private ?\DateTimeImmutable $buyAt = null;
+
+    #[ORM\Column]
+    private ?int $totalInterestReceived = null;
 
     public function __construct()
     {
@@ -123,14 +126,14 @@ class Investment
         return $this;
     }
 
-    public function getAlreadyReceived(): ?int
+    public function getCapitalAlreadyReceived(): ?int
     {
-        return $this->alreadyReceived;
+        return $this->capitalAlreadyReceived;
     }
 
-    public function setAlreadyReceived(?int $alreadyReceived): static
+    public function setCapitalAlreadyReceived(?int $capitalAlreadyReceived): static
     {
-        $this->alreadyReceived = $alreadyReceived;
+        $this->capitalAlreadyReceived = $capitalAlreadyReceived;
 
         return $this;
     }
@@ -255,5 +258,17 @@ class Investment
     public function __toString()
     {
         return $this->name;
+    }
+
+    public function getTotalInterestReceived(): ?int
+    {
+        return $this->totalInterestReceived;
+    }
+
+    public function setTotalInterestReceived(int $totalInterestReceived): static
+    {
+        $this->totalInterestReceived = $totalInterestReceived;
+
+        return $this;
     }
 }

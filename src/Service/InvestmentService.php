@@ -202,6 +202,7 @@ class InvestmentService {
             $entityInDatabase->setBuyAt($startDate);
             $entityInDatabase->setEndAt($dateFin);
             $entityInDatabase->setIsFinished(false);
+            $entityInDatabase->setTotalInterestReceived(0);
             $entityInDatabase->setStartingCapital($investment['Capital']);
             $entityInDatabase->setDuration($investment['Durée']);
             $entityInDatabase->setRate($investment['Taux']);
@@ -241,36 +242,3 @@ class InvestmentService {
         return ($interval->y * 12) + $interval->m;
     }
 }
-
-
-
-// // Initialise les variables de calcul
-// $total_deja_recu = 0;
-// $max_mois_restant = 0;
-// $total_par_mois = [];
-
-// // Calcule le montant total déjà reçu et le nombre max de Durées
-// foreach ($investissements as $investissement) {
-//     $total_deja_recu += $investissement['Déjà reçu'];
-//     $mois_restant = intval($investissement['Durée']);
-//     if ($mois_restant > $max_mois_restant) {
-//         $max_mois_restant = $mois_restant;
-//     }
-// }
-
-// // Calcule les totaux pour chaque mois à venir, en ajoutant le capital pour le dernier mois
-// for ($i = 1; $i <= $max_mois_restant; $i++) {
-//     $total_par_mois[$i] = 0;
-//     foreach ($investissements as $investissement) {
-//         $mois_restant = intval($investissement['Durée']);
-//         if ($i <= $mois_restant) {
-//             // C'est le dernier mois de l'investissement
-//             if ($i == $mois_restant) {
-//                 $total_par_mois[$i] += $investissement['Montant / mois'] + $investissement['Capital'];
-//             } else {
-//                 // Ce n'est pas le dernier mois
-//                 $total_par_mois[$i] += $investissement['Montant / mois'];
-//             }
-//         }
-//     }
-// }

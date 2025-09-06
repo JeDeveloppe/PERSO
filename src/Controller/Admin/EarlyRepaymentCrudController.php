@@ -51,6 +51,7 @@ class EarlyRepaymentCrudController extends AbstractCrudController
     {
         if($entityInstance instanceof EarlyRepayment) {
             $investment = $entityInstance->getInvestment();
+
             $remainingCapitalNow = $this->earlyRepaymentService->calculateRemainingCapital($investment);
             $remainingCapital = $remainingCapitalNow - $entityInstance->getValue();
 
@@ -66,6 +67,10 @@ class EarlyRepaymentCrudController extends AbstractCrudController
             $entityInstance->setRemainingCapital($remainingCapital);
 
             parent::persistEntity($entityManager, $entityInstance);
+
+            //?on met à jour le capital recu par l'investisseur et les interets recu depuis le debut de l'investissement
+            $this->earlyRepaymentService->updateCapitalAlreadyReceived($investment);
+            $this->earlyRepaymentService->updateTotalInterestReceived($investment);
         }
     }
 }
