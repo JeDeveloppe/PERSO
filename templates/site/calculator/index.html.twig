@@ -1,0 +1,92 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Graphique de l'évolution des soldes par compte{% endblock %}
+
+{% block body %}
+
+<div class="d-flex justify-content-center align-items-center my-5">
+<div class="calculator-container">
+<div class="calculator-card p-4">
+<h1 class="text-center mb-4 text-primary fw-bold">Simulation d'investissement</h1>
+<p class="text-center mb-5 text-secondary">
+Évaluez la rentabilité potentielle de votre projet d'achat de mobil-home.
+</p>
+
+        <div class="row">
+            <!-- Colonne des entrées de données -->
+            <div class="col-lg-6">
+                <h3 class="mb-4 text-success">Données du projet</h3>
+                <form id="simulationForm">
+                    <div class="mb-3">
+                        <label for="prixAchat" class="calculator-form-label">Prix d'achat du mobil-home (€)</label>
+                        <input type="number" class="form-control" id="prixAchat" value="40000" min="0" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="fraisInstallation" class="calculator-form-label">Frais d'installation et de raccordement (€)</label>
+                        <input type="number" class="form-control" id="fraisInstallation" value="3000" min="0" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="prixLocation" class="calculator-form-label">Prix de la location journalière (€)</label>
+                        <input type="number" class="form-control" id="prixLocation" value="80" min="0" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="joursLocation" class="calculator-form-label">Nombre de jours de location par an</label>
+                        <input type="number" class="form-control" id="joursLocation" value="150" min="0" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="chargesAnnuelles" class="calculator-form-label">Charges annuelles (emplacement, assurance, etc.) (€)</label>
+                        <input type="number" class="form-control" id="chargesAnnuelles" value="4000" min="0" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="fraisMaintenance" class="calculator-form-label">Frais de maintenance annuels (€)</label>
+                        <input type="number" class="form-control" id="fraisMaintenance" value="500" min="0" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="taxesImpots" class="calculator-form-label">Taxes et impôts annuels estimés (€)</label>
+                        <input type="number" class="form-control" id="taxesImpots" value="200" min="0" required>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Colonne des résultats -->
+            <div class="col-lg-6">
+                <h3 class="mb-4 text-success">Résultats de la simulation</h3>
+                <div class="calculator-bg-light-green p-4 rounded-3 text-success fw-bold text-center mb-4">
+                    <div class="calculator-result-label">Investissement Initial Total</div>
+                    <div class="calculator-result-value" id="investissementTotal"></div>
+                </div>
+
+                <div class="calculator-card p-3 mb-3">
+                    <div class="calculator-result-label">Revenu Annuel Brut</div>
+                    <div class="calculator-result-value text-primary" id="revenuBrut"></div>
+                </div>
+
+                <div class="calculator-card p-3 mb-3">
+                    <div class="calculator-result-label">Revenu Annuel Net (charges / frais et taxes déduites)</div>
+                    <div class="calculator-result-value text-success" id="revenuNet"></div>
+                </div>
+
+                <div class="calculator-card p-3 mb-3">
+                    <div class="calculator-result-label">Rentabilité Annuelle (ROI)</div>
+                    <div class="calculator-result-value text-info" id="rentabilite"></div>
+                </div>
+
+                <div class="calculator-card p-3 mb-3">
+                    <div class="calculator-result-label">Délai de Retour sur Investissement</div>
+                    <div class="calculator-result-value text-warning" id="delaiRetour"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</div>
+
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+
+    <script src="{{ asset('js/investissement_simulator.js') }}" ></script>
+
+{% endblock %}

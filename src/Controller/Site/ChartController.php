@@ -13,17 +13,37 @@ final class ChartController extends AbstractController
 {
     public function __construct(
         private InvestmentRepository $investmentRepository,
-        private ChartService $chartservice
+        private ChartService $chartService
     ) {}
 
-    #[Route('/investments/graph/', name: 'app_jp_graph')]
-    public function index(): Response
+    #[Route('/investments/interests-projection/', name: 'app_investments_interests_projection')]
+    public function chartOfInvestmentsInterestsProjection(): Response
     {
         $investments = $this->investmentRepository->findBy(['isFinished' => false]);
 
-        $chart = $this->chartservice->generateChartInterests($investments);
+        $chart = $this->chartService->generateChartInterestsByInvestment($investments);
         
-        return $this->render('site/chart/chart.html.twig', [
+        return $this->render('site/chart/investment/interest_projection.html.twig', [
+            'chart' => $chart,
+        ]);
+    }
+
+    #[Route('/accounts/soldes-projection/', name: 'app_accounts_soldes_projection')]
+    public function chartOfAccountsSoldes(): Response
+    {
+        $chart = $this->chartService->generateChartInterestByAccount();
+
+        return $this->render('site/chart/account/soldes_projection.html.twig', [
+            'chart' => $chart,
+        ]);
+    }
+
+    #[Route('/accounts/interests-projection/', name: 'app_accounts_interests_projection')]
+    public function chartOfAccountInterestsProjection(): Response
+    {
+        $chart = $this->chartService->generateChartInterestByAcccountByYear();
+
+        return $this->render('site/chart/account/interests_projection.html.twig', [
             'chart' => $chart,
         ]);
     }

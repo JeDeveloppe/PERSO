@@ -3,11 +3,12 @@
 namespace App\Service;
 
 use DateTimeImmutable;
-use App\Entity\EarlyRepayment;
-use App\Repository\EarlyRepaymentRepository;
+use App\Entity\Account;
+use App\Repository\AccountRepository;
 use Symfony\UX\Chartjs\Model\Chart;
 use App\Repository\InvestmentRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use App\Repository\EarlyRepaymentRepository;
 use Symfony\UX\Chartjs\Builder\ChartBuilderInterface;
 
 class ChartService {
@@ -16,11 +17,13 @@ class ChartService {
         private InvestmentRepository $investmentRepository,
         private EntityManagerInterface $entityManagerInterface,
         private ChartBuilderInterface $chartBuilder,
-        private EarlyRepaymentRepository $earlyRepaymentRepository
+        private EarlyRepaymentRepository $earlyRepaymentRepository,
+        private AccountRepository $accountRepository,
+        private AccountService $accountService
     )
     {}
 
-    public function generateChartInterests($investments): Chart
+    public function generateChartInterestsByInvestment($investments): Chart
     {
         $plotData = [];
         $allDates = [];
@@ -167,6 +170,150 @@ class ChartService {
                         'display' => true,
                         'text' => 'Montant en EUR',
                     ],
+                ],
+            ],
+        ]);
+
+        return $chart;
+    }
+
+    public function generateChartInterestByAccount(int $years = 5): Chart
+    {
+        $accounts = $this->accountRepository->findAll();
+
+        $datasets = [];
+        $labels = [];
+
+        // Couleurs par défaut pour le graphique
+        $colors = [
+            'rgb(34, 197, 94)',
+            'rgb(59, 130, 246)',
+            'rgb(249, 115, 22)',
+            'rgb(239, 68, 68)',
+            'rgb(168, 85, 247)',
+            'rgb(236, 72, 153)',
+        ];
+
+        foreach ($accounts as $account) {
+            $futureData = $this->accountService->calculateFutureInterests($account, $years);
+
+            // Création des labels (années) à partir du premier compte
+            if (empty($labels)) {
+                $labels = array_map(fn($item) => $item['year'], $futureData);
+            }
+
+            // Convertit les valeurs de centimes en euros
+            $finalBalances = array_map(fn($item) => $item['final_balance'] / 100, $futureData);
+
+            $datasets[] = [
+                'label' => $account->getName(), // Assumant que l'entité Account a un getName()
+                'data' => $finalBalances,
+                'borderColor' => $colors[count($datasets) % count($colors)],
+                'backgroundColor' => $colors[count($datasets) % count($colors)],
+                'tension' => 0.2,
+            ];
+        }
+
+        $chart = $this->chartBuilder->createChart(Chart::TYPE_LINE);
+
+        $chart->setData([
+            'labels' => $labels,
+            'datasets' => $datasets,
+        ]);
+
+        $chart->setOptions([
+            'plugins' => [
+                'title' => [
+                    'display' => true,
+                    'text' => 'Projection des soldes de tous les comptes sur ' . $years . ' ans',
+                    'font' => ['size' => 16],
+                ],
+                'tooltip' => [
+                    'mode' => 'index',
+                    'intersect' => false,
+                ],
+            ],
+            'responsive' => true,
+            'maintainAspectRatio' => false,
+            'scales' => [
+                'x' => [
+                    'title' => ['display' => true, 'text' => 'Année'],
+                ],
+                'y' => [
+                    'title' => ['display' => true, 'text' => 'Solde (€)'],
+                    'beginAtZero' => true,
+                ],
+            ],
+        ]);
+
+        return $chart;
+    }
+
+    public function generateChartInterestByAcccountByYear(int $years = 5): Chart
+    {
+        $accounts = $this->accountRepository->findAll();
+
+        $datasets = [];
+        $labels = [];
+
+        // Couleurs par défaut pour le graphique
+        $colors = [
+            'rgb(34, 197, 94)',
+            'rgb(59, 130, 246)',
+            'rgb(249, 115, 22)',
+            'rgb(239, 68, 68)',
+            'rgb(168, 85, 247)',
+            'rgb(236, 72, 153)',
+        ];
+
+        foreach ($accounts as $account) {
+            $futureData = $this->accountService->calculateFutureInterests($account, $years);
+
+            // Création des labels (années) à partir du premier compte
+            if (empty($labels)) {
+                $labels = array_map(fn($item) => $item['year'], $futureData);
+            }
+
+            // Convertit les valeurs d'intérêts en euros
+            $annualInterests = array_map(fn($item) => $item['interest_earned'] / 100, $futureData);
+
+            $datasets[] = [
+                'label' => $account->getName(), // Assumant que l'entité Account a un getName()
+                'data' => $annualInterests,
+                'backgroundColor' => $colors[count($datasets) % count($colors)],
+            ];
+        }
+
+        $chart = $this->chartBuilder->createChart(Chart::TYPE_BAR);
+
+        $chart->setData([
+            'labels' => $labels,
+            'datasets' => $datasets,
+        ]);
+
+        $chart->setOptions([
+            'plugins' => [
+                'title' => [
+                    'display' => true,
+                    'text' => 'Total des intérêts annuels par compte sur ' . $years . ' ans',
+                    'font' => ['size' => 16],
+                ],
+                'tooltip' => [
+                    'mode' => 'index',
+                    'intersect' => false,
+                ],
+            ],
+            'responsive' => true,
+            'maintainAspectRatio' => false,
+            'scales' => [
+                'x' => [
+                    'stacked' => true,
+                    'title' => ['display' => true, 'text' => 'Année'],
+                ],
+                'y' => [
+                    'stacked' => true,
+                    'title' => ['display' => true, 'text' => 'Intérêts (€)'],
+                    'beginAtZero' => true,
                 ],
             ],
         ]);

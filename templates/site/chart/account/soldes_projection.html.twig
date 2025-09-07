@@ -1,0 +1,18 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Graphique de l'évolution des soldes par compte{% endblock %}
+
+{% block body %}
+
+    <div class="container text-center py-5">
+
+<h1 class="text-3xl font-bold mb-6 text-center text-gray-800">Projection des soldes des comptes</h1>
+<p class="text-center text-gray-600 mb-8">Ce graphique montre l'évolution des solds en fonction des taux d'intérêt et des plafonds.</p>
+
+<div class="position-relative" style="height: 600px;">
+    {{ render_chart(chart) }}
+</div>
+
+</div>
+{% endblock %}
+

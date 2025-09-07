@@ -2,6 +2,7 @@
 
 namespace App\Controller\Admin;
 
+use App\Entity\Account;
 use App\Entity\Category;
 use App\Entity\LegalInformation;
 use App\Entity\Project;
@@ -9,6 +10,8 @@ use App\Entity\Technology;
 use App\Entity\TechnologyFamily;
 use App\Entity\Training;
 use App\Entity\Article;
+use App\Entity\Bank;
+use App\Entity\Ceiling;
 use App\Entity\EarlyRepayment;
 use App\Entity\Investment;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Dashboard;
@@ -40,5 +43,10 @@ class DashboardController extends AbstractDashboardController
         yield MenuItem::section('Investissements');
         yield MenuItem::linkToCrud('Projets', 'fas fa-list', Investment::class);
         yield MenuItem::linkToCrud('Remboursements', 'fas fa-list', EarlyRepayment::class);
+
+        yield MenuItem::section('Comptes bancaires');
+        yield MenuItem::linkToCrud('Banques', 'fas fa-list', Bank::class);
+        yield MenuItem::linkToCrud('Plafonds', 'fas fa-list', Ceiling::class);
+        yield MenuItem::linkToCrud('Comptes', 'fas fa-list', Account::class);
     }
 }
