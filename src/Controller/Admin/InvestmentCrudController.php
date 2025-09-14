@@ -51,7 +51,7 @@ class InvestmentCrudController extends AbstractCrudController
     public function configureCrud(Crud $crud): Crud
     {
         return $crud
-            ->setDefaultSort(['id' => 'DESC'])
+            ->setDefaultSort(['buyAt' => 'DESC'])
             ->setPageTitle('index', 'Liste des investissements')
             ->setPageTitle('new', 'Nouvel investissement')
             ->setPageTitle('edit', 'Gestion d\'un investissement')
@@ -68,9 +68,9 @@ class InvestmentCrudController extends AbstractCrudController
                 $interestByMonth = $entityInstance->getStartingCapital() * $entityInstance->getRate() / 100 / 12;
                 $entityInstance->setInterestByMonth($interestByMonth);
             }
-
             //?on met à jour la durée de l'investissement
-            $dateFin = $entityInstance->getStartAt()->modify('+' . $entityInstance->getDuration() . ' months');
+            $durationInMonthsForCalculation = $entityInstance->getDuration() - 1;
+            $dateFin = $entityInstance->getStartAt()->modify('+' . $durationInMonthsForCalculation . ' months');
             $entityInstance->setEndAt($dateFin);
 
             //?si le mois en cours dépasse la date de fin de l'investissement à la date prévue, on met fin à l'investissement
@@ -86,16 +86,18 @@ class InvestmentCrudController extends AbstractCrudController
             
             $dateFin = $entityInstance->getStartAt()
                 ->setTimezone($timezone)
-                ->modify('+' . $entityInstance->getDuration() . ' months')
+                ->modify('+' . $durationInMonthsForCalculation . ' months')
                 ->setDate(
-                    $entityInstance->getStartAt()->modify('+' . $entityInstance->getDuration() . ' months')->format('Y'),
-                    $entityInstance->getStartAt()->modify('+' . $entityInstance->getDuration() . ' months')->format('m'),
+                    $entityInstance->getStartAt()->modify('+' . $durationInMonthsForCalculation . ' months')->format('Y'),
+                    $entityInstance->getStartAt()->modify('+' . $durationInMonthsForCalculation . ' months')->format('m'),
                     $paymentDay
                 );
             $entityInstance->setEndAt($dateFin);
+            $entityInstance->setTotalInterestReceived(0);
             $entityInstance->setIsFinished(false);
 
             $entityManager->persist($entityInstance);
+
             $entityManager->flush();
         }
     }
@@ -119,15 +121,17 @@ class InvestmentCrudController extends AbstractCrudController
 
             //?on met à jour la durée de l'investissement
             $paymentDay = $entityInstance->getPaymentDate();
+            $durationInMonthsForCalculation = $entityInstance->getDuration() - 1;
+
             //? On s'assure que le fuseau horaire est bien défini avant de manipuler la date
             $timezone = new DateTimeZone('Europe/Paris');
             
             $dateFin = $entityInstance->getStartAt()
                 ->setTimezone($timezone)
-                ->modify('+' . $entityInstance->getDuration() . ' months')
+                ->modify('+' . $durationInMonthsForCalculation . ' months')
                 ->setDate(
-                    $entityInstance->getStartAt()->modify('+' . $entityInstance->getDuration() . ' months')->format('Y'),
-                    $entityInstance->getStartAt()->modify('+' . $entityInstance->getDuration() . ' months')->format('m'),
+                    $entityInstance->getStartAt()->modify('+' . $durationInMonthsForCalculation . ' months')->format('Y'),
+                    $entityInstance->getStartAt()->modify('+' . $durationInMonthsForCalculation . ' months')->format('m'),
                     $paymentDay
                 );
             $entityInstance->setEndAt($dateFin);

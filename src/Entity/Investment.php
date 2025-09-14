@@ -49,7 +49,7 @@ class Investment
     private ?\DateTimeImmutable $endAt = null;
 
     #[ORM\Column]
-    private ?int $interestByMonth = null;
+    private ?int $interestByMonth = 0;
 
     #[ORM\Column]
     #[Assert\Range(

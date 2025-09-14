@@ -41,20 +41,18 @@ class EarlyRepaymentService {
         $this->em->flush();
     }
 
-    public function calculateRemainingInterrestByMonth(Investment $investment): int
+    public function calculateRemainingInterrestByMonth(Investment $investment, $remainingCapital): int
     {
         $rate = $investment->getRate();
-
         //?s'il y a des reglements anticipés, on prend le dernier capital calculé
         if($investment->getEarlyRepayments()->count() > 0) {
             $lastEarlyRepayment = $this->earlyRepaymentRepository->findLastEarlyRepayment($investment);
             $lastCapital = $lastEarlyRepayment->getRemainingCapital();
         }else{
-            $lastCapital = $investment->getStartingCapital();
+            $lastCapital = $remainingCapital;
         }
 
         $newInterestByMonth = round($lastCapital * $this->mathsService->transformeRateIntoPercentage($rate) / 12, 2);
-
         return $newInterestByMonth;
 
     }

@@ -19,7 +19,7 @@ final class ChartController extends AbstractController
     #[Route('/investments/interests-projection/', name: 'app_investments_interests_projection')]
     public function chartOfInvestmentsInterestsProjection(): Response
     {
-        $investments = $this->investmentRepository->findBy(['isFinished' => false]);
+        $investments = $this->investmentRepository->findBy(['isFinished' => false], ['buyAt' => 'DESC']);
 
         $chart = $this->chartService->generateChartInterestsByInvestment($investments);
         

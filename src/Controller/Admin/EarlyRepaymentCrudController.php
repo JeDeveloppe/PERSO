@@ -61,7 +61,7 @@ class EarlyRepaymentCrudController extends AbstractCrudController
                 dd('STOP');
             }
 
-            $remainingInterestByMonth = $this->earlyRepaymentService->calculateRemainingInterrestByMonth($entityInstance->getInvestment());
+            $remainingInterestByMonth = $this->earlyRepaymentService->calculateRemainingInterrestByMonth($entityInstance->getInvestment(), $remainingCapital);
             $entityInstance->setRemainingInterestByMonth($remainingInterestByMonth);
 
             $entityInstance->setRemainingCapital($remainingCapital);

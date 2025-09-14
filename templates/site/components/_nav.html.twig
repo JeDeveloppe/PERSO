@@ -1,13 +1,13 @@
-  <nav class="navbar navbar-expand-lg bg-primary" data-bs-theme="dark">
-      <div class="container-fluid">
+<nav class="navbar navbar-expand-lg bg-primary" data-bs-theme="dark">
+    <div class="container-fluid">
         <a class="navbar-brand" href="#">PERSO</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarColor01" aria-controls="navbarColor01" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
+            <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarColor01">
             <ul class="navbar-nav me-auto">
                 <li class="nav-item">
-                  <a class="nav-link" href="{{ path('app_calculator') }}">Calculatrice</a>
+                    <a class="nav-link" href="{{ path('app_calculator') }}">Calculatrice</a>
                 </li>
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Investissements</a>
@@ -18,13 +18,22 @@
                     </div>
                 </li>
                 <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Bourse</a>
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item" href="{{ path('app_stock_market_wallet') }}">Portefeuille</a>
+                    </div>
+                </li>
+                <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Comptes</a>
                     <div class="dropdown-menu">
                         <a class="dropdown-item" href="{{ path('app_accounts_soldes_projection') }}">Graphique évolution des soldes</a>
                         <a class="dropdown-item" href="{{ path('app_accounts_interests_projection') }}">Graphique évolution des interets</a>
                     </div>
                 </li>
+                <li class="nav-item ms-auto">
+                    <a class="nav-link" href="{{ path('admin') }}">Admin</a>
+                </li>
             </ul>
         </div>
-      </div>
-    </nav>
+    </div>
+</nav>

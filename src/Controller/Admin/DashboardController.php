@@ -14,6 +14,7 @@ use App\Entity\Bank;
 use App\Entity\Ceiling;
 use App\Entity\EarlyRepayment;
 use App\Entity\Investment;
+use App\Entity\StockMarket;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Dashboard;
 use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractDashboardController;
@@ -48,5 +49,8 @@ class DashboardController extends AbstractDashboardController
         yield MenuItem::linkToCrud('Banques', 'fas fa-list', Bank::class);
         yield MenuItem::linkToCrud('Plafonds', 'fas fa-list', Ceiling::class);
         yield MenuItem::linkToCrud('Comptes', 'fas fa-list', Account::class);
+
+        yield MenuItem::section('Bourse');
+        yield MenuItem::linkToCrud('Actions', 'fas fa-list', StockMarket::class);
     }
 }
