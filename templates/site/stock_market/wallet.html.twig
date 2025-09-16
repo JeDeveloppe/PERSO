@@ -1,79 +1,124 @@
 {% extends 'base.html.twig' %}
 
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('styles/wallet/wallet.css') }}">
+{% endblock %}
+
 {% block body %}
+    <div id="data-api-urls" data-api-wallet="{{ path('app_stock_market_get_prices') }}"></div>
+
     <div class="container mt-4">
         <h1 class="text-center my-5">Mon portefeuille d'actions</h1>
 
-        <div class="table-responsive">
-            <table class="table table-hover align-middle">
-                <thead class="table-dark">
-                    <tr>
-                        <th>Action</th>
-                        <th class="text-end">Prix d'achat</th>
-                        <th class="text-end">Quantité</th>
-                        <th class="text-end">Prix actuel</th>
-                        <th class="text-end">Valeur totale</th>
-                        <th class="text-end">Gain/Perte</th>
-                    </tr>
-                </thead>
-                <tbody>
-                {% for item in stocks_with_prices %}
-                    {# The keys for Alpha Vantage are different, so we adapt the template to them. #}
-                    {% set currentPrice = item.prices['05. price']|default(null) %}
-                    {% set purchasePriceIncludingTVA = item.entity.purchasePriceIncludingTVA / 100|number_format(2, '.', ',') %}
-                    {% set totalValue = item.totalValue|default(null) %}
-                    {% set gainOrLoss = item.gainOrLoss|default(null) %}
+        {# Le bloc de résumé sera mis à jour par JS, mais il est visible par défaut #}
+        <div class="row text-center mb-5" id="summary-container">
+            <div class="col-md-6 mb-3">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <h5 class="card-title text-muted">Valeur totale du portefeuille</h5>
+                        <p class="card-text fs-2 fw-bold" id="total-value">
+                            N/A
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <h5 class="card-title text-muted">Gain/Perte total</h5>
+                        <p class="card-text fs-2 fw-bold" id="gain-or-loss-total">
+                            N/A
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-                    <tr class="table-hover">
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <div>
-                                    <div class="fw-bold">{{ item.entity.name }}</div>
-                                    <div class="text-muted">{{ item.entity.symbol }} <span class="small">({{ item.entity.isinCode }})</span></div>
+        {# Loader en superposition en plein écran, caché par défaut #}
+        <div id="loader-overlay" class="loader-overlay" style="display: none;">
+            <div class="loader-content text-center">
+                <div class="piggy-bank-loader position-relative mx-auto">
+                    <i class="fas fa-piggy-bank fa-5x text-warning"></i>
+                    <i class="fas fa-coins text-success coin coin-1"></i>
+                    <i class="fas fa-coins text-secondary coin coin-2"></i>
+                    <i class="fas fa-coins text-warning coin coin-3"></i>
+                </div>
+                <p class="mt-3 text-white fs-5">Calculs en cours...</p>
+            </div>
+        </div>
+        
+        <div id="content-container">
+            {# Bouton pour lancer la mise à jour #}
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h5 m-0">Détails des actions</h2>
+                <div>
+                    <button id="update-prices-btn" class="btn btn-primary">
+                        <span id="btn-text">Chercher les cours actuels</span>
+                        <i id="btn-spinner" class="fas fa-spinner fa-spin ms-2" style="display: none;"></i>
+                    </button>
+                    <div class="text-muted small mt-2">Dernière mise à jour : <span id="last-updated">N/A</span></div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Action</th>
+                            <th class="text-end">Prix d'achat</th>
+                            <th class="text-end">Quantité</th>
+                            <th class="text-end">Prix actuel</th>
+                            <th class="text-end">Valeur totale</th>
+                            <th class="text-end">Gain/Perte</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for stock in stocks %}
+                        <tr class="table-hover" data-id="{{ stock.id }}">
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div>
+                                        <div class="fw-bold">
+                                            <a href="{{ ea_url({
+                                                'crudControllerFqcn': 'App\\Controller\\Admin\\StockMarketCrudController',
+                                                'crudAction': 'edit',
+                                                'entityId': stock.id
+                                            }) }}" class="text-decoration-none text-dark">
+                                                {{ stock.name }}
+                                            </a>
+                                        </div>
+                                        <div class="text-muted">{{ stock.symbol }} <span class="small">({{ stock.isinCode }})</span></div>
+                                    </div>
                                 </div>
-                            </div>
-                        </td>
-                        <td class="text-end">{{ purchasePriceIncludingTVA }} €</td>
-                        <td class="text-end">{{ item.entity.quantity }}</td>
-                        <td class="text-end">
-                            {% if currentPrice is not null %}
-                                {{ currentPrice|number_format(2, '.', ',') }} €
-                            {% else %}
+                            </td>
+                            <td class="text-end">{{ (stock.purchasePriceIncludingTVA / 100)|number_format(2, '.', ',') }} €</td>
+                            <td class="text-end">{{ stock.quantity }}</td>
+                            <td class="text-end price-cell">
                                 <span class="text-muted">N/A</span>
-                            {% endif %}
-                        </td>
-                        <td class="text-end fw-bold">
-                            {% if totalValue is not null %}
-                                {{ totalValue|number_format(2, '.', ',') }} €
-                            {% else %}
+                            </td>
+                            <td class="text-end fw-bold total-value-cell">
                                 <span class="text-muted">N/A</span>
-                            {% endif %}
-                        </td>
-                        <td class="text-end fw-bold">
-                            {% if gainOrLoss is not null %}
-                                <span class="{% if gainOrLoss > 0 %}text-success{% elseif gainOrLoss < 0 %}text-danger{% else %}text-muted{% endif %}">
-                                    {% if gainOrLoss > 0 %}
-                                        <i class="fas fa-caret-up"></i>
-                                    {% elseif gainOrLoss < 0 %}
-                                        <i class="fas fa-caret-down"></i>
-                                    {% endif %}
-                                    {{ gainOrLoss|number_format(2, '.', ',') }} €
-                                </span>
-                            {% else %}
+                            </td>
+                            <td class="text-end fw-bold gain-or-loss-cell">
                                 <span class="text-muted">N/A</span>
-                            {% endif %}
-                        </td>
-                    </tr>
-                {% else %}
-                    <tr>
-                        <td colspan="6" class="text-center text-muted py-5">
-                            <i class="fas fa-folder-open me-2"></i>
-                            Aucune action dans votre portefeuille.
-                        </td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-5">
+                                <i class="fas fa-folder-open me-2"></i>
+                                Aucune action dans votre portefeuille.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
+{% endblock %}
+{% block javascripts %}
+    {{ parent() }}
+    <script src="{{ asset('js/wallet.js') }}"></script>
 {% endblock %}

@@ -3,17 +3,18 @@
 namespace App\Controller\Site;
 
 use App\Repository\StockMarketRepository;
-use App\Service\AlphaVantageService;
+use App\Service\NinjaService;
 use App\Service\StockMarketService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
 
 final class StockMarketController extends AbstractController
 {
     public function __construct(
         private StockMarketRepository $stockMarketRepository,
-        private AlphaVantageService $alphaVantageService,
+        private NinjaService $ninjaService,
         private StockMarketService $stockMarketService
     )
     {
@@ -22,38 +23,56 @@ final class StockMarketController extends AbstractController
     #[Route('/stock_market/wallet', name: 'app_stock_market_wallet')]
     public function wallet(): Response
     {
-        // 1. Récupérer toutes les actions depuis la base de données
-        // Assurez-vous que le nom de la classe est correct, par exemple 'Stock'
         $stocks = $this->stockMarketRepository->findAll();
 
+        return $this->render('site/stock_market/wallet.html.twig', [
+            'stocks' => $stocks,
+        ]);
+    }
+
+    #[Route('/stock_market/get_prices', name: 'app_stock_market_get_prices', methods: ['GET'])]
+    public function getPrices(): JsonResponse
+    {
+        $stocks = $this->stockMarketRepository->findAll();
         $stocksWithPrices = [];
+        $apiDataCache = [];
+        $totalValueOfTheWallet = 0;
+        $gainOrLossTotalValue = 0;
 
-        // 2. Parcourir chaque action pour obtenir son prix via l'API
         foreach($stocks as $stock) {
-            // Supposons que votre entité Stock a une méthode getSymbol() qui retourne le code ISIN ou le ticker
             $symbol = $stock->getSymbol();
-            $priceData = $this->alphaVantageService->getStockPrice($symbol);
 
-            if (!$priceData) {
-                $priceData['05. price'] = null;
+            if (!isset($apiDataCache[$symbol])) {
+                $datas = $this->ninjaService->getStockPrice($symbol);
+
+                if ($datas != null && isset($datas['price'])) {
+                    $actualPrice = $datas['price'];
+                    $apiDataCache[$symbol] = $actualPrice;
+                } else {
+                    $actualPrice = null;
+                }
+            } else {
+                $actualPrice = $apiDataCache[$symbol];
             }
 
-            $gainOrLoss = $this->stockMarketService->culculateGainOrLoss($stock, $priceData);
-            $totalValue = $this->stockMarketService->calculateTotalValue($stock, $priceData);
+            $gainOrLoss = $this->stockMarketService->culculateGainOrLoss($stock, $actualPrice);
+            $gainOrLossTotalValue += $gainOrLoss;
 
-            // 3. Ajouter les données de l'API à votre objet ou un tableau
-            // Cela permet d'avoir toutes les informations nécessaires dans un seul objet
+            $totalValue = $this->stockMarketService->calculateTotalValue($stock, $actualPrice);
+            $totalValueOfTheWallet += $totalValue;
+
             $stocksWithPrices[] = [
-                'entity' => $stock, // L'entité complète depuis la BDD
-                'prices' => $priceData, // Les données de prix de l'API
+                'id' => $stock->getId(),
+                'actualPrice' => $actualPrice,
                 'gainOrLoss' => $gainOrLoss,
                 'totalValue' => $totalValue
             ];
         }
 
-        // 4. Transférer les données complètes au template
-        return $this->render('site/stock_market/wallet.html.twig', [
-            'stocks_with_prices' => $stocksWithPrices,
+        return new JsonResponse([
+            'stocks' => $stocksWithPrices,
+            'total_value_of_the_wallet' => $totalValueOfTheWallet,
+            'gain_or_loss_total_value' => $gainOrLossTotalValue,
         ]);
     }
 }

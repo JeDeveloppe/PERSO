@@ -16,9 +16,9 @@ services:
     App\:
         resource: '../src/'
 
-    App\Service\AlphaVantageService:
-        arguments:
-            $alphaVantageApiKey: '%env(ALPHA_VANTAGE_API_KEY)%'
+    App\Service\NinjaService:
+            arguments:
+                $ninjaApiKey: '%env(NINJAS_API_ACCESS_KEY)%'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

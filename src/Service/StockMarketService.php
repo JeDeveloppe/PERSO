@@ -6,37 +6,33 @@ use App\Entity\StockMarket;
 
 class StockMarketService{
 
-    public function culculateGainOrLoss(StockMarket $stockMarket, array $priceData): float | null
+    public function culculateGainOrLoss(StockMarket $stockMarket, ?float $actualPrice): float | null
     {
         $qte = $stockMarket->getQuantity();
         $buyPrice = $stockMarket->getPurchasePriceIncludingTVA() / 100;
 
-        if($priceData['05. price'] == null){
+        if($actualPrice == null){
             
             return null;
 
         }else{
 
-            $actualPrice = $priceData['05. price'];
             $gainOrLoss = ($actualPrice - $buyPrice)  * $qte;
-    
     
             return $gainOrLoss;
         }
     }
 
-    public function calculateTotalValue(StockMarket $stockMarket, array $priceData): float | null
+    public function calculateTotalValue(StockMarket $stockMarket, ?float $actualPrice): float | null
     {
         $qte = $stockMarket->getQuantity();
-        $buyPrice = $stockMarket->getPurchasePriceIncludingTVA() / 100;
 
-        if($priceData['05. price'] == null){
+        if($actualPrice == null){
             
-            return null;
+            return 0;
 
         }else{
 
-            $actualPrice = $priceData['05. price'];
             $totalValue = $actualPrice * $qte;
     
             return $totalValue;
